@@ -2,7 +2,7 @@ name: ${INSTANCE_NAME:-agentpost}
 
 services:
   api:
-    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/AgenticEconomics}/agentpost-api:${IMAGE_TAG:-0.1.0}
     build:
       context: .
       dockerfile: Dockerfile
@@ -30,7 +30,7 @@ services:
       - instance-net
 
   web:
-    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/AgenticEconomics}/agentpost-web:${IMAGE_TAG:-0.1.0}
     build:
       context: .
       dockerfile: Dockerfile
@@ -48,7 +48,7 @@ services:
   worker-alice:
     profiles:
       - workers
-    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-worker:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/AgenticEconomics}/agentpost-worker:${IMAGE_TAG:-0.1.0}
     build:
       context: .
       dockerfile: Dockerfile

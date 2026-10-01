@@ -130,8 +130,8 @@ cd jarvik && docker compose up -d   # jarvik.local → :18765 / :58081
 
 ```bash
 # .env 中设置
-IMAGE_REGISTRY=ghcr.io/agentic economics
-IMAGE_TAG=latest
+IMAGE_REGISTRY=ghcr.io/AgenticEconomics
+IMAGE_TAG=0.1.0
 
 # 使用 pull-only compose
 cp docker-compose.pull.yml docker-compose.yml
