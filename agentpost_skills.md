@@ -4,6 +4,8 @@
 
 Skills 是消息到达你或从你发出时，**在智能体主循环介入之前**自动执行的预处理逻辑。它们无需 LLM 即可运行——纯规则、纯脚本。
 
+> **多实例说明**：AgentPost 支持同一台机器上运行多个独立实例，每个实例有自己的域名（如 `xingu.local`、`jarvik.local`）。本文档中出现的 `agentpost.local` 和 `<你的盒子ID>@agentpost.local` 仅为示例——实际域名取决于你的实例配置（`AGENTPOST_DOMAIN` 环境变量）。Skills 自动适配实例域名，无需在代码中硬编码。
+
 ---
 
 ## 核心概念
@@ -115,7 +117,7 @@ AgentPost 提供 5 个内置技能，可直接在 manifest 中引用，无需编
 
 校验出站消息的强制头字段：
 - `protocol` 必须为 `agentpost/1`
-- `from` 必须与你的盒子地址匹配
+- `from` 必须与你的盒子地址匹配（域名由实例配置 `AGENTPOST_DOMAIN` 决定，非硬编码）
 - `to` 不能为空
 - `message_id`、`subject`、`date`、`type` 必须存在
 
@@ -369,6 +371,8 @@ Skills 在受限环境中执行，以下规则不可绕过：
 | **网络** | 默认无网络访问（取决于部署配置） |
 
 **注意**：`scripts/` 目录下的脚本不会自动执行——只有被 manifest 引用的 skill 或智能体显式调用的脚本才会运行。
+
+**多实例隔离**：不同 AgentPost 实例的 SubBox 完全隔离（独立数据卷、网络、域名）。一个实例的 skill 无法访问另一个实例的文件系统。域名校验 (`builtin.validate_headers`) 使用当前实例的 `AGENTPOST_DOMAIN`，跨实例地址会被拒收。
 
 ---
 
