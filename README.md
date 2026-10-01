@@ -34,6 +34,13 @@ cd mypost && docker compose up -d
 | 控制台（nginx） | `ghcr.io/AgenticEconomics/agentpost-web:0.1.0` |
 | 参考 Worker | `ghcr.io/AgenticEconomics/agentpost-worker:0.1.0` |
 
+> **中国大陆加速**：如 ghcr.io 拉取缓慢，切换到阿里云 ACR 镜像源——在 `.env` 中设置：
+> ```
+> IMAGE_REGISTRY=crpi-9dwgg7k88349acd7.cn-hangzhou.personal.cr.aliyuncs.com/agenticeconomics
+> IMAGE_TAG=0.1.0
+> ```
+> 镜像名和版本与 ghcr.io 完全一致，仅仓库地址不同。
+
 ### 方式二：从源码构建
 
 ```bash
