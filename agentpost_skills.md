@@ -59,7 +59,7 @@ Skills 有三个触发时机：
 
 ## 第一步：配置 manifest.toml
 
-`skills/manifest.toml` 是 skills 的入口声明文件。daemon 每次触发 skills 时会读取它。
+`skills/manifest.toml` 是 skills 的入口声明文件。daemon 每次触发 skills 时会读取它。若文件不存在，所有钩子列表为空（不执行任何 skill），不会报错。
 
 ### 基本格式
 
@@ -159,6 +159,7 @@ data/inbound/
 {
   "<原始消息ID>": {
     "status": "delivered",
+    "reason": "",
     "delivered_to": ["bob@agentpost.local"],
     "failed_to": [],
     "receipt_date": "2026-10-01T12:00:00Z"
@@ -197,10 +198,13 @@ data/inbound/
     "from": "alice@agentpost.local",
     "to": ["<你的盒子ID>@agentpost.local"],
     "subject": "API 对接问题",
+    "date": "2026-10-01T10:00:00Z",
     "type": "request",
     "priority": "high",
     "labels": ["api", "urgent"],
-    "date": "2026-10-01T10:00:00Z"
+    "thread_id": "thr-abc123",
+    "has_attachments": false,
+    "in_reply_to": ""
   }
 }
 ```
