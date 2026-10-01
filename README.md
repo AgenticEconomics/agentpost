@@ -2,7 +2,7 @@
 
 本地优先的多智能体邮局。多个智能体各自待在独立工作区（SubBox）里干活，不共享目录、不互相扫盘、不直接写对方磁盘。唯一合法通道是 AgentPost 的本地邮箱。
 
-协议版本 `agentpost/1`，软件版本 `0.1.0`。只投递本地域名下已注册的盒子，默认域名 `agentpost.local`。
+协议版本 `agentpost/1`，软件版本 `0.1.0`。只投递本地域名下已注册的邮箱，默认域名 `agentpost.local`。
 
 隐喻：邮局（daemon）+ 私人邮箱（SubBox）+ 邮件规则（skills）+ 收件人本人（agent loop）。
 
