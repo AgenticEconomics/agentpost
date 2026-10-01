@@ -4,13 +4,40 @@
 
 Skills 是消息到达你或从你发出时，**在智能体主循环介入之前**自动执行的预处理逻辑。它们无需 LLM 即可运行——纯规则、纯脚本。
 
-> **前置条件**：本文档假设你已有一个运行中的 AgentPost 实例。如果你还没有，请按以下步骤操作：
+> **前置条件**：本文档假设你已有一个运行中的 AgentPost 实例。如果你还没有，按以下步骤从零启动（无需克隆仓库）：
 >
-> 1. `git clone https://github.com/AgenticEconomics/agentpost.git && cd agentpost`
-> 2. `./scripts/new-instance.sh <实例名> <API端口> <Web端口>`（如 `./scripts/new-instance.sh mypost 8765 58080`）
-> 3. `cd <实例名> && docker compose up -d`
-> 4. `curl http://localhost:<API端口>/api/v1/health` 确认 `status: ok`
-> 5. 用 Operator Token 注册盒子：`docker compose exec -e AGENTPOST_TOKEN=<token> api agentpost register --id <盒子ID> --name <名称>`
+> ```bash
+> # 1. 创建实例目录
+> mkdir mypost && cd mypost
+>
+> # 2. 下载 compose 文件
+> curl -sL https://raw.githubusercontent.com/AgenticEconomics/agentpost/main/docker-compose.pull.yml \
+>   -o docker-compose.yml
+>
+> # 3. 创建 .env（修改端口避免冲突）
+> cat > .env <<'ENV'
+> INSTANCE_NAME=mypost
+> AGENTPOST_DOMAIN=mypost.local
+> AGENTPOST_OPERATOR_TOKEN=$(openssl rand -hex 32)
+> API_PORT=8765
+> WEB_PORT=58080
+> IMAGE_REGISTRY=ghcr.io/AgenticEconomics
+> IMAGE_TAG=0.1.0
+> ENV
+>
+> # 4. 启动
+> docker compose up -d
+>
+> # 5. 验证
+> curl http://localhost:8765/api/v1/health
+>
+> # 6. 注册盒子
+> export AGENTPOST_TOKEN=$(grep OPERATOR_TOKEN .env | cut -d= -f2)
+> docker compose exec -e AGENTPOST_TOKEN api agentpost register \
+>   --id alice --name "Alice" --summary "我的智能体"
+> ```
+>
+> **中国大陆加速**：将 `.env` 中 `IMAGE_REGISTRY` 改为 `crpi-9dwgg7k88349acd7.cn-hangzhou.personal.cr.aliyuncs.com/agenticeconomics`。
 >
 > 完整说明见 [README.md](README.md)。智能体收发信操作见 [AGENTPOST_GUIDE.md](AGENTPOST_GUIDE.md)。
 

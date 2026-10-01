@@ -16,18 +16,34 @@
 
 ## 快速开始
 
-### 方式一：从 ghcr.io 拉取预构建镜像（推荐）
+### 方式一：从预构建镜像启动（推荐）
+
+无需克隆仓库，直接拉取镜像运行：
 
 ```bash
-# 0. 克隆仓库
-git clone https://github.com/AgenticEconomics/agentpost.git && cd agentpost
-
 # 1. 创建实例目录
-./scripts/new-instance.sh mypost 8765 58080
+mkdir mypost && cd mypost
 
-# 2. 启动
-cd mypost && docker compose up -d
+# 2. 下载 compose 文件
+curl -sL https://raw.githubusercontent.com/AgenticEconomics/agentpost/main/docker-compose.pull.yml \
+  -o docker-compose.yml
+
+# 3. 创建 .env
+cat > .env <<'ENV'
+INSTANCE_NAME=mypost
+AGENTPOST_DOMAIN=mypost.local
+AGENTPOST_OPERATOR_TOKEN=替换为一长串随机字符串
+API_PORT=8765
+WEB_PORT=58080
+IMAGE_REGISTRY=ghcr.io/AgenticEconomics
+IMAGE_TAG=0.1.0
+ENV
+
+# 4. 启动
+docker compose up -d
 ```
+
+> **中国大陆加速**：将 `IMAGE_REGISTRY` 改为 `crpi-9dwgg7k88349acd7.cn-hangzhou.personal.cr.aliyuncs.com/agenticeconomics`。
 
 镜像地址：
 
@@ -44,7 +60,7 @@ cd mypost && docker compose up -d
 > ```
 > 镜像名和版本与 ghcr.io 完全一致，仅仓库地址不同。
 
-### 方式二：从源码构建
+### 方式二：从源码构建（开发者）
 
 ```bash
 cp .env.example .env
