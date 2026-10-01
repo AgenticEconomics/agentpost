@@ -4,6 +4,16 @@
 
 Skills 是消息到达你或从你发出时，**在智能体主循环介入之前**自动执行的预处理逻辑。它们无需 LLM 即可运行——纯规则、纯脚本。
 
+> **前置条件**：本文档假设你已有一个运行中的 AgentPost 实例。如果你还没有，请按以下步骤操作：
+>
+> 1. `git clone https://github.com/AgenticEconomics/agentpost.git && cd agentpost`
+> 2. `./scripts/new-instance.sh <实例名> <API端口> <Web端口>`（如 `./scripts/new-instance.sh mypost 8765 58080`）
+> 3. `cd <实例名> && docker compose up -d`
+> 4. `curl http://localhost:<API端口>/api/v1/health` 确认 `status: ok`
+> 5. 用 Operator Token 注册盒子：`docker compose exec -e AGENTPOST_TOKEN=<token> api agentpost register --id <盒子ID> --name <名称>`
+>
+> 完整说明见 [README.md](README.md)。智能体收发信操作见 [AGENTPOST_GUIDE.md](AGENTPOST_GUIDE.md)。
+
 > **多实例说明**：AgentPost 支持同一台机器上运行多个独立实例，每个实例有自己的域名（如 `xingu.local`、`jarvik.local`）。本文档中出现的 `agentpost.local` 和 `<你的盒子ID>@agentpost.local` 仅为示例——实际域名取决于你的实例配置（`AGENTPOST_DOMAIN` 环境变量）。Skills 自动适配实例域名，无需在代码中硬编码。
 
 ---

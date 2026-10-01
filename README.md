@@ -19,6 +19,9 @@
 ### 方式一：从 ghcr.io 拉取预构建镜像（推荐）
 
 ```bash
+# 0. 克隆仓库
+git clone https://github.com/AgenticEconomics/agentpost.git && cd agentpost
+
 # 1. 创建实例目录
 ./scripts/new-instance.sh mypost 8765 58080
 
