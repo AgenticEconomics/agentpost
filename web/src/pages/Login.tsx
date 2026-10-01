@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
@@ -9,8 +9,16 @@ export default function Login() {
   const [boxId, setBoxId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [domain, setDomain] = useState('agentpost.local');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch('/api/v1/config')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.domain) setDomain(data.domain); })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +139,7 @@ export default function Login() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
                 <p className="mt-1 text-xs text-gray-400">
-                  地址格式：ID@agentpost.local
+                  地址格式：ID@{domain}
                 </p>
               </div>
             )}

@@ -265,3 +265,27 @@ Content-Type: text/markdown
 | AUDIT-D04 | README 架构图 daemon 画成独立进程 | 修正为与 API 同进程 |
 | AUDIT-D05 | `AGENT_GUIDE.md` 写死部署地址 | 移至 `docs/DEPLOYMENT_GUIDE.md`，新建通用 `AGENTPOST_GUIDE.md` |
 | AUDIT-D06 | `AGENTPOST_GUIDE.md` 不存在 | 新建，使用通用占位符 |
+
+---
+
+## 2026-10-01 多实例化改造
+
+> 状态：**已实施**
+
+使 AgentPost 支持同一台机器上并行运行多个独立实例。
+
+### 改动
+
+| 编号 | 改动 | 文件 |
+|------|------|------|
+| MI-001 | Compose 全面参数化（INSTANCE_NAME, API_PORT, WEB_PORT, IMAGE_REGISTRY） | `docker-compose.yml` |
+| MI-002 | 新建 pull-only compose（纯 ghcr.io 镜像，无 build） | `docker-compose.pull.yml` |
+| MI-003 | 后端 SkillsEngine 注入 domain 参数，消除硬编码 `agentpost.local` | `skills/engine.py`, `daemon/engine.py` |
+| MI-004 | 前端 Login 页动态获取域名（`GET /api/v1/config`） | `web/src/pages/Login.tsx` |
+| MI-005 | GitHub Actions CI：build & push 三镜像到 ghcr.io | `.github/workflows/build-push.yml` |
+| MI-006 | 实例初始化脚本 | `scripts/new-instance.sh` |
+| MI-007 | `.env.example` 扩展为完整实例配置模板 | `.env.example` |
+
+### 验证结果
+
+两个实例（xingu / jarvik）并行运行，域名、端口、容器名、数据卷、网络完全隔离，消息投递正确。

@@ -172,7 +172,7 @@ class DeliveryEngine:
                     return
 
         # Run on_send skills
-        skills_engine = SkillsEngine(box_root)
+        skills_engine = SkillsEngine(box_root, domain=self.domain)
         send_results = skills_engine.run_on_send(message)
         self._stats["skills_run"] += len(send_results)
         for r in send_results:
@@ -343,7 +343,7 @@ class DeliveryEngine:
         it to inbox/cur. This ensures agents polling folder=new can always see
         newly delivered messages.
         """
-        skills_engine = SkillsEngine(recipient_box)
+        skills_engine = SkillsEngine(recipient_box, domain=self.domain)
         results = skills_engine.run_on_receive(message, message_path)
         self._stats["skills_run"] += len(results)
 
@@ -369,7 +369,7 @@ class DeliveryEngine:
             protocol="agentpost/1",
             message_id=generate_message_id("postmaster", self.domain),
             from_addr=f"postmaster@{self.domain}",
-            to=["unknown@agentpost.local"],
+            to=[f"unknown@{self.domain}"],
             subject=f"Rejected: {filename}",
             date=datetime.now(timezone.utc).isoformat(),
             type="receipt",

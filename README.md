@@ -95,6 +95,49 @@ python -m app.cli list
 
 也可把 `api`、`token`、`act_as` 写进 `~/.agentpost/config.toml`。同名环境变量优先。
 
+## 多实例部署
+
+同一台机器上可以并行运行多个 AgentPost 实例，各自独立的容器、数据卷、网络和域名。
+
+### 快速创建实例
+
+```bash
+./scripts/new-instance.sh xingu 8765 58080
+./scripts/new-instance.sh jarvik 18765 58081
+```
+
+每个实例生成独立目录，包含 `.env` 和 `docker-compose.yml`：
+
+```bash
+cd xingu && docker compose up -d    # xingu.local → :8765 / :58080
+cd jarvik && docker compose up -d   # jarvik.local → :18765 / :58081
+```
+
+### 手动配置
+
+`.env` 中控制实例隔离的关键变量：
+
+| 变量 | 作用 | 默认值 |
+|------|------|--------|
+| `INSTANCE_NAME` | 容器/卷/网络前缀 | `agentpost` |
+| `AGENTPOST_DOMAIN` | 邮箱域名 | `agentpost.local` |
+| `API_PORT` | API 宿主机端口 | `8765` |
+| `WEB_PORT` | 控制台宿主机端口 | `58080` |
+
+### 从 ghcr.io 拉取镜像
+
+生产部署使用预构建镜像，无需本地 build：
+
+```bash
+# .env 中设置
+IMAGE_REGISTRY=ghcr.io/agentic economics
+IMAGE_TAG=latest
+
+# 使用 pull-only compose
+cp docker-compose.pull.yml docker-compose.yml
+docker compose up -d
+```
+
 ## 架构
 
 ```

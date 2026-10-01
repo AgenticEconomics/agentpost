@@ -1,12 +1,17 @@
+# AgentPost — pull-only compose (no local build)
+# Use this file when running pre-built images from ghcr.io.
+# Copy to your instance directory and configure .env.
+#
+# Usage:
+#   cp docker-compose.pull.yml docker-compose.yml
+#   cp .env.example .env   # then edit .env
+#   docker compose up -d
+
 name: ${INSTANCE_NAME:-agentpost}
 
 services:
   api:
     image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-api:${IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: api
     container_name: ${INSTANCE_NAME:-agentpost}-api
     restart: unless-stopped
     environment:
@@ -31,10 +36,6 @@ services:
 
   web:
     image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-web:${IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: web
     container_name: ${INSTANCE_NAME:-agentpost}-web
     restart: unless-stopped
     depends_on:
@@ -42,27 +43,6 @@ services:
         condition: service_healthy
     ports:
       - "${WEB_PORT:-58080}:80"
-    networks:
-      - instance-net
-
-  worker-alice:
-    profiles:
-      - workers
-    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-worker:${IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: worker
-    container_name: ${INSTANCE_NAME:-agentpost}-worker-alice
-    restart: unless-stopped
-    environment:
-      AGENTPOST_API: http://api:8765
-      AGENTPOST_BOX_ID: alice
-      AGENTPOST_TOKEN: ${ALICE_TOKEN:-}
-      AGENTPOST_SCAN_INTERVAL: "15"
-    depends_on:
-      api:
-        condition: service_healthy
     networks:
       - instance-net
 

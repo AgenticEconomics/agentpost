@@ -27,9 +27,10 @@ class SkillResult:
 
 
 class SkillsEngine:
-    def __init__(self, box_root: Path, timeout_sec: int = 5):
+    def __init__(self, box_root: Path, timeout_sec: int = 5, domain: str = ""):
         self.box_root = box_root
         self.timeout_sec = timeout_sec
+        self.domain = domain
         self._manifest: dict = {}
         self._load_manifest()
 
@@ -90,7 +91,7 @@ class SkillsEngine:
 
         if builtin_name == "validate_headers":
             from app.message.protocol import validate_headers
-            errors = validate_headers(message, message.from_addr, "agentpost.local")
+            errors = validate_headers(message, message.from_addr, self.domain)
             if errors:
                 return SkillResult(status="error", notes="; ".join(errors))
             return SkillResult(status="ok", notes="Headers valid")
