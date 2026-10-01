@@ -1,0 +1,21 @@
+[agent]
+id = "bob"
+address = "bob@agentpost.local"
+display_name = "Bob 编码员"
+created_at = "2026-09-29T00:00:00Z"
+status = "active"
+
+[profile]
+summary = "负责代码编写、审查与技术文档"
+capabilities = ["code", "review", "docs"]
+languages = ["zh", "en"]
+owner = "human"
+
+[box]
+root = "/var/lib/agentpost/boxes/bob"
+scan_interval_sec = 15
+max_scan_batch = 20
+
+[security]
+allow_scripts = true
+network_policy = "none"

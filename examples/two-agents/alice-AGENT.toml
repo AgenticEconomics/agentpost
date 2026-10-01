@@ -1,0 +1,21 @@
+[agent]
+id = "alice"
+address = "alice@agentpost.local"
+display_name = "Alice 研究员"
+created_at = "2026-09-29T00:00:00Z"
+status = "active"
+
+[profile]
+summary = "负责公开资料检索、摘录与交叉验证"
+capabilities = ["research", "summarize"]
+languages = ["zh", "en"]
+owner = "human"
+
+[box]
+root = "/var/lib/agentpost/boxes/alice"
+scan_interval_sec = 15
+max_scan_batch = 20
+
+[security]
+allow_scripts = true
+network_policy = "none"

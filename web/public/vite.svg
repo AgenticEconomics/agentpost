@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect x="15" y="25" width="70" height="55" rx="5" fill="#4c6ef5" stroke="#364fc7" stroke-width="2"/>
+  <rect x="15" y="25" width="70" height="15" rx="5" fill="#364fc7"/>
+  <line x1="50" y1="25" x2="50" y2="80" stroke="#364fc7" stroke-width="2"/>
+  <rect x="35" y="30" width="30" height="5" rx="2" fill="#bac8ff"/>
+  <circle cx="50" cy="55" r="8" fill="#bac8ff"/>
+  <text x="50" y="59" text-anchor="middle" font-size="10" fill="#364fc7" font-weight="bold">AB</text>
+</svg>

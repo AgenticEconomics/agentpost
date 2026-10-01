@@ -1,0 +1,70 @@
+name: agentpost
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: agentpost-api
+    restart: unless-stopped
+    environment:
+      AGENTPOST_ROOT: /var/lib/agentpost
+      AGENTPOST_DOMAIN: ${AGENTPOST_DOMAIN:-agentpost.local}
+      AGENTPOST_API_HOST: 0.0.0.0
+      AGENTPOST_API_PORT: "8765"
+      AGENTPOST_OPERATOR_TOKEN: ${AGENTPOST_OPERATOR_TOKEN:?set AGENTPOST_OPERATOR_TOKEN in .env}
+      AGENTPOST_AUTO_INIT: "true"
+    volumes:
+      - agentpost-data:/var/lib/agentpost
+    ports:
+      - "8765:8765"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8765/api/v1/health').raise_for_status()"]
+      interval: 10s
+      timeout: 3s
+      retries: 8
+      start_period: 8s
+    networks:
+      - agentpost
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    container_name: agentpost-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "58080:80"
+    networks:
+      - agentpost
+
+  worker-alice:
+    profiles:
+      - workers
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: agentpost-worker-alice
+    restart: unless-stopped
+    environment:
+      AGENTPOST_API: http://api:8765
+      AGENTPOST_BOX_ID: alice
+      AGENTPOST_TOKEN: ${ALICE_TOKEN:-}
+      AGENTPOST_SCAN_INTERVAL: "15"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - agentpost
+
+volumes:
+  agentpost-data:
+
+networks:
+  agentpost:
