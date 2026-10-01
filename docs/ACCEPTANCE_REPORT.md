@@ -63,7 +63,7 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 
 ### 阶段三：多实例化改造（commit `fb254c9`）
 
-使 AgentPost 支持同一台机器上并行运行多个独立实例，镜像发布到 ghcr.io。
+使 AgentPost 支持同一台机器上并行运行多个独立实例，镜像发布到 `ghcr.io/AgenticEconomics`。
 
 #### 改动清单
 
@@ -107,11 +107,19 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 
 | 文件 | 用途 |
 |------|------|
-| `.github/workflows/build-push.yml` | CI/CD：构建三镜像推送 ghcr.io |
+| `.github/workflows/build-push.yml` | CI/CD：构建三镜像推送 `ghcr.io/AgenticEconomics` |
 | `docker-compose.pull.yml` | 生产部署用 pull-only compose |
 | `scripts/new-instance.sh` | 一键创建新实例 |
 | `.env.example` | 完整配置模板 |
 | `.gitignore` | 排除 `.env`、`__pycache__`、`node_modules` |
+
+预构建镜像（`0.1.0`）：
+
+| 镜像 | 用途 |
+|------|------|
+| `ghcr.io/AgenticEconomics/agentpost-api:0.1.0` | FastAPI 服务端 + 投递引擎 + CLI |
+| `ghcr.io/AgenticEconomics/agentpost-web:0.1.0` | React 控制台（nginx） |
+| `ghcr.io/AgenticEconomics/agentpost-worker:0.1.0` | 参考 Worker 进程 |
 
 ---
 
@@ -154,6 +162,8 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 | `434a022` | 19:51 | 品牌重塑 + 代码审计修复 + 文档重写（82 files, +15056） |
 | `0de7d10` | 19:58 | 术语微调、移除开发提示词 |
 | `fb254c9` | 20:19 | 多实例化改造（10 files, +280） |
+| `aec7e16` | 20:31 | 验收总结报告存档 |
+| `2f1e46f` | 20:39 | 修正 ghcr.io 镜像地址和版本号 |
 
 ---
 
@@ -165,7 +175,7 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 | 前端 | React 18, TypeScript, Vite, Tailwind CSS |
 | CLI | Python + Typer + Rich（25 个命令） |
 | 部署 | Docker Compose, nginx, multi-stage Dockerfile |
-| CI/CD | GitHub Actions → ghcr.io |
+| CI/CD | GitHub Actions → `ghcr.io/AgenticEconomics` |
 
 ---
 
@@ -181,4 +191,4 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 
 ---
 
-*报告生成于 2026-10-01，基于 git 提交 `fb254c9`。*
+*报告生成于 2026-10-01，基于 git 提交 `2f1e46f`。*
