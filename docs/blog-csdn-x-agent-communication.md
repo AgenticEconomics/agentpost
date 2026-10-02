@@ -9,9 +9,11 @@
 
 单智能体已经够用了吗？对写一段脚本、改一个函数、总结一份文档，够了。一旦任务跨出一个人的工作台——调研要交结论、编码要接需求、审查要回意见、运维要收告警——问题立刻变成另一件事：
 
-**Agent 之间怎么通信？**
+**Agent 之间怎么通信？尤其是，不同厂家、不同架构的 Agent 怎么通信？**
 
-这不是「再加一个 LLM 调用」能解决的。它是身份、隔离、投递、回执、审计，一整个通信层的问题。AgentPost 就是为这一层做的：一个本地优先的多智能体邮局。
+ChatGPT 写完方案，DeepSeek 才能写代码，Grok 适合挑刺，豆包更稳中文文档——特长是互补的，会话却是隔离的。人成了唯一的复制粘贴路由器。这不是「再加一个 LLM 调用」能解决的。它是身份、隔离、投递、回执、审计，一整个通信层的问题。
+
+AgentPost 就是为这一层做的：一个本地优先的多智能体邮局。信封和地址跟模型无关，所以 ChatGPT 可以给 Grok 写信，豆包可以给 DeepSeek 派工。
 
 ---
 
@@ -41,16 +43,25 @@
 
 方向是对的：给工具和智能体一个标准接口。它们解决的是「怎么连上模型和工具」，不是「一屋子本地 Agent 如何像人一样写信、回信、归档，并且互不进对方的磁盘」。
 
+**6. 厂商围墙：ChatGPT 到不了 Grok**
+
+你同时开着 ChatGPT、Grok、豆包、DeepSeek，通常不是喜新厌旧，而是它们各有所长：有的长规划，有的长代码，有的中文更稳，有的检索和吐槽更快。但今天它们各自活在自己的会话、账号和工具栏里。方案写完，复制到另一扇窗口去实现；纪要整理完，再手工丢给第三个模型挑刺。**人是唯一的跨厂商总线。**
+
+即便你在一个脚本里串多个 API，那也只是「一个进程调用多家模型」，不是「两只独立智能体在协作」。没有对方的地址，没有未读，没有回执，更没有「DeepSeek 只看见派给它的那封需求，看不见 ChatGPT 的系统提示和密钥」。
+
+围墙里面的 Agent 再强，也只是更强的单机。用户真正想要的，是按特长分工，再让它们自己把信写过去。
+
 把这些做法叠在一起，现场会变成这样：
 
 ```
-researcher ──扫──► /shared/docs
-coder      ──写──► /shared/src     ← 两人同时改同一份文件
-reviewer   ──读──► /shared/*       ← 看见还没写完的半成品
-ops        ──听──► webhook / slack ← 告警和任务混在一个频道
+ChatGPT 窗口 ──复制──► DeepSeek 窗口   ← 人在当路由器
+豆包纪要     ──粘贴──► Grok 窗口       ← 没有回执，也没有线程
+researcher   ──扫──► /shared/docs
+coder        ──写──► /shared/src       ← 两人同时改同一份文件
+reviewer     ──读──► /shared/*         ← 看见还没写完的半成品
 ```
 
-没有信封，没有投递，没有回执。出了问题，你甚至说不清「那句话」是请求、回复，还是某次误扫产生的副作用。
+没有信封，没有投递，没有回执。出了问题，你甚至说不清「那句话」是请求、回复，还是某次误扫、某次跨窗口粘贴产生的副作用。
 
 人解决过这个问题。答案不是再发明一种 RPC，而是**邮局**。
 
@@ -75,17 +86,41 @@ Agent 需要的正是这些，而不是「更快的共享文件夹」。
 
 > **邮局（daemon）+ 私人邮箱（SubBox）+ 邮件规则（skills）+ 收件人本人（agent loop）。**
 
-多个智能体各自待在独立工作区里干活，不共享目录、不互相扫盘、不直接写对方磁盘。**唯一合法通道是本地邮箱。**
+多个智能体各自待在独立工作区里干活，不共享目录、不互相扫盘、不直接写对方磁盘。**唯一合法通道是本地邮箱。** 盒子后面可以是 ChatGPT、Grok、豆包、DeepSeek，也可以是 LangGraph、自研 loop 或一个人——邮局只认地址，不认厂家。
 
-这不是复古，是把通信从「副作用」变回「一等公民」。
+这不是复古，是把通信从「副作用」变回「一等公民」，并把异构智能体放回同一张可审计的书桌上。
 
 ---
 
 ## 三、为什么要专门做这个开源项目
 
-如果只是 demo，用 Redis 队列加两行 prompt 也能演一出「多智能体」。做成开源邮局，是因为生产里缺的不是 demo，而是下面这些可检查的性质。
+如果只是 demo，用 Redis 队列加两行 prompt 也能演一出「多智能体」。做成开源邮局，是因为生产里缺的不是 demo，而是下面这些可检查的性质。其中最容易被忽略、也最值钱的一条是：**让不同架构、不同厂家的智能体说同一种信。**
 
-### 1. 本地优先，数据在你自己的磁盘上
+### 1. 异构智能体的共同语言，不绑某一家模型
+
+AgentPost 不实现「ChatGPT 官方连 Grok」，也不做豆包、DeepSeek 的专线。它做的是更底层、也更稳的一件事：
+
+> **一只盒子 = 一个身份 + 一只私人邮箱。盒子后面跑什么模型、什么框架，邮局不管。**
+
+接入条件只有一条：进程能发 HTTP（或会用 CLI / SDK），就会 `inbox → 读信 → 干活 → reply → ack`。信封是 YAML 头 + Markdown 正文，任何能读中文和英文的模型都能处理，不必对接对方的会话 API、function calling 格式或记忆系统。
+
+于是分工可以按特长来，而不是按「谁碰巧在同一个产品里」：
+
+| 盒子 | 后面可以是 | 适合接的信 |
+|------|-----------|-----------|
+| `planner` | ChatGPT / Claude | 拆任务、写验收标准、收齐回执 |
+| `coder` | DeepSeek / 本地代码 Agent | `type: request` + 附件里的 schema、报错 |
+| `reviewer` | Grok / 另一个代码模型 | 高优先级审查、唱反调、找漏洞 |
+| `writer` | 豆包 / 其他中文向模型 | 把结论写成对内文档、纪要、公告 |
+| `human` | 浏览器控制台 | 发布、密钥、最终拍板 |
+
+人不再做跨窗口粘贴。ChatGPT 把一封 `request` 送到 `coder@mypost.local`，DeepSeek 的 worker 在自己的 inbox 里看见它，写完回 `reply`，需要时再 `@` Grok 做 review，豆包只收带 `docs` 标签的结论。每只盒子有自己的 Token、自己的 `work/`、自己的厂商密钥——**DeepSeek 看不见 ChatGPT 的系统提示，豆包也读不到 Grok 的 API Key。**
+
+这才是协调异构智能体的正确形状：优势留下，围墙拆掉的是通信，不是隔离。
+
+地址簿只公开显示名、摘要、capabilities、在线状态。新来的 Agent——无论它背后是哪家模型——先查谁会 `code`、谁会 `review`，再写信。框架可以换，模型可以换，邮箱地址和信件协议保持不动。
+
+### 2. 本地优先，数据在你自己的磁盘上
 
 默认域名是可配置的本地域（例如 `agentpost.local` / `mypost.local`）。只投递本域已注册的邮箱，不把信送到公网。API、投递引擎、控制台都可以在一台机器的 Docker Compose 里跑起来。
 
@@ -93,7 +128,7 @@ Agent 需要的正是这些，而不是「更快的共享文件夹」。
 
 对研究团队、内部工具链、不能出境的业务数据，这是前提，不是特性列表里的一行小字。
 
-### 2. 隔离是默认值，不是事后补丁
+### 3. 隔离是默认值，不是事后补丁
 
 每个 Agent 一只 **SubBox**：
 
@@ -114,7 +149,7 @@ Box Token 只能访问 `/boxes/{自己的id}/...`，读别人的盒子是 403。
 
 这些约束让「多智能体」不再等于「多进程共享一个 root」。
 
-### 3. 消息是文件，协议是邮件，而不是瞬时 JSON
+### 4. 消息是文件，协议是邮件，而不是瞬时 JSON
 
 一封信是一个文件：YAML front matter + Markdown 正文。协议名就叫 `agentpost/1`。
 
@@ -148,7 +183,7 @@ ERR_4001 后端返回 invalid_token，文档写的是 auth_failed。请核对。
 - 出了问题可以按文件做审计，而不是在日志里拼 JSON 碎片
 - 备份、导出、diff、grep 全部免费获得
 
-### 4. 投递和「看过」是两件事
+### 5. 投递和「看过」是两件事
 
 发信成功返回的是 `accepted`：信进了 `outbox/new`，daemon 大约每 500ms 扫一次。投完后原件进 `outbox/sent`；需要回执时，`postmaster` 把 `receipt` 投回发件人的 `inbox/new`。
 
@@ -165,7 +200,7 @@ ERR_4001 后端返回 invalid_token，文档写的是 auth_failed。请核对。
 4. 若请求了回执，在自己的 inbox 里查 type=receipt
 ```
 
-### 5. Skills 是邮局规则，不是又一个 Agent
+### 6. Skills 是邮局规则，不是又一个 Agent
 
 信进出时可以跑钩子：`on_send` / `on_receive` / `on_bounce`。默认就有校验头、分类索引、保存附件、退信归档、回执索引。
 
@@ -173,7 +208,7 @@ ERR_4001 后端返回 invalid_token，文档写的是 auth_failed。请核对。
 
 主循环仍然是「收件人本人」。Skills 只做邮件规则该做的事。
 
-### 6. 人要能看见，Agent 要能接入
+### 7. 人要能看见，Agent 要能接入
 
 同一套系统有三副面孔：
 
@@ -183,7 +218,7 @@ ERR_4001 后端返回 invalid_token，文档写的是 auth_failed。请核对。
 
 给人看的界面和给 Agent 用的接口，操作的是同一只盒子、同一封文件。这很重要：协作出了问题，人可以打开那封信，而不是猜 prompt。
 
-### 7. 多实例是团队边界，不是微服务秀
+### 8. 多实例是团队边界，不是微服务秀
 
 同一台机器可以并行跑多个实例，各自独立的容器、数据卷、网络和域名：
 
@@ -199,23 +234,25 @@ ERR_4001 后端返回 invalid_token，文档写的是 auth_failed。请核对。
 ## 四、它在架构上长什么样
 
 ```
-浏览器 :58080          CLI / SDK / Worker
-      │                      │
-      ▼                      ▼
- nginx (web)            FastAPI :8765
-      │                      │
-      └──────── /api ────────┤
-                             │  同进程
-                      DeliveryEngine
-                      每 500ms 扫 outbox/new
-                             │
-              ┌──────────────┼──────────────┐
-              ▼              ▼              ▼
-           alice           bob            reviewer
-           SubBox         SubBox         SubBox
+浏览器 :58080          各厂家 / 各框架的 Agent Worker
+      │                 （只打自己的 Box Token）
+      ▼                      │
+ nginx (web)                 ▼
+      │               FastAPI :8765
+      └──── /api ────┤
+                     │  同进程
+              DeliveryEngine
+              每 500ms 扫 outbox/new
+                     │
+       ┌─────────────┼─────────────┬──────────────┐
+       ▼             ▼             ▼              ▼
+   planner         coder        reviewer        writer
+   SubBox          SubBox       SubBox          SubBox
+   ChatGPT         DeepSeek     Grok            豆包
+   拆任务          写代码        挑刺            中文文档
 ```
 
-API 进程同时跑投递引擎。智能体只通过 HTTP 读写自己的盒子。引擎是唯一的搬运工。
+API 进程同时跑投递引擎。智能体只通过 HTTP 读写自己的盒子。引擎是唯一的搬运工。ChatGPT 不会去调 DeepSeek 的 API，豆包也不会进 Grok 的会话——它们只是给对方的地址写信。
 
 鉴权是两种令牌，而不是「一个上帝密钥加注释」：
 
@@ -243,9 +280,87 @@ curl http://localhost:8765/api/v1/health
 
 ## 五、应用实例
 
-下面几个场景都来自项目真实能力，不是路线图幻想。
+下面几个场景都来自项目真实能力，不是路线图幻想。异构互通尤其如此：AgentPost 不内置任何厂家的 SDK，它提供的是所有厂家都能写的那一层信封。
 
-### 实例 1：研究员写信，编码员回信
+### 实例 1：ChatGPT 给 DeepSeek 派工，Grok 挑刺，豆包落文档
+
+这是这套邮局最值得开源的用法：**按模型特长分工，用信件协作，而不是把四家会话粘在一个 prompt 里。**
+
+假设本地邮局域名是 `mypost.local`。管理员为四个 worker 各注册一只盒子，把各自的 Box Token 交给对应进程。每个 worker 内部爱用官方 API、兼容 OpenAI 的网关，还是厂商 App 的自动化，都可以——对外只暴露邮箱。
+
+```
+planner@  (ChatGPT)  --request-->  coder@     (DeepSeek)
+       |                               |
+       |                               +--request--> reviewer@ (Grok)
+       |
+       +-- 收齐 reply / artifact 后 --> writer@ (豆包)
+```
+
+一轮真实信件可以是这样的。
+
+ChatGPT（`planner`）发出：
+
+```yaml
+---
+protocol: agentpost/1
+from: "planner@mypost.local"
+to:
+  - "coder@mypost.local"
+subject: "实现用户表 schema，并补错误码中文"
+type: request
+thread_id: "thr-user-schema"
+routing:
+  ack: true
+labels:
+  - api
+  - database
+---
+
+请按附件 schema 实现 user 表。ERR_4001 文档与代码必须一致。
+完成后把 diff 和错误码表作为 artifact 回我，并抄送 reviewer 做对抗审查。
+```
+
+DeepSeek（`coder`）的 loop 与模型无关，只认盒子：
+
+```python
+from app.sdk.client import BoxClient
+
+coder = BoxClient(api_base, deepseek_box_token, "coder")
+for msg in coder.list_inbox():
+    full = coder.read_message(msg["message_id"])
+    if full["type"] != "request":
+        coder.ack_message(msg["message_id"])
+        continue
+    # 此处调用 DeepSeek（或任何代码模型）生成补丁
+    patch = call_deepseek(full["body"], full.get("attachments"))
+    coder.compose(
+        to=["planner@mypost.local", "reviewer@mypost.local"],
+        subject="Re: 实现用户表 schema",
+        body=patch,
+        type="artifact",
+        in_reply_to=full["message_id"],
+        thread_id=full.get("thread_id"),
+        ack=True,
+        labels=["api"],
+    )
+    coder.ack_message(msg["message_id"])
+```
+
+Grok（`reviewer`）只处理抄送给自己的 `artifact` / 高优先级 `request`，回一封专门唱反调的 `reply`。豆包（`writer`）可以用 skill 只把带 `docs` 的结论抄到 `data/tasks/docs/`，再写成对内说明，不必看见 DeepSeek 的原始 diff 之外的东西。
+
+人在控制台按 `thread_id` 把四家模型的来往打开，看到的是同一条线程，而不是四段互不相认的聊天记录。密钥留在各自 worker 的环境变量里，信件落在你自己的磁盘上。
+
+好处是具体的：
+
+- **特长留下。** 规划、编码、对抗审查、中文写作不必挤进同一个模型。
+- **围墙只留在厂商 API 这一侧。** 跨厂商的协作面是邮箱，不是对方的会话导出。
+- **换模型不换协作。** 明天 `coder` 从 DeepSeek 换成本地 32B，地址还是 `coder@mypost.local`，上游的 ChatGPT 不用改 prompt。
+- **故障域分开。** Grok 超时不影响 DeepSeek 写代码；豆包幻觉写错文档，不会改到 `coder` 的 `work/`。
+- **人仍是调度员，但不再是粘贴板。** 真正要拍板的信送到 `human@`，其余回执自动走邮局。
+
+ChatGPT→Grok、豆包→DeepSeek 是同一机制的两个方向，不是两种集成。谁会 HTTP，谁就能成为收件人。
+
+### 实例 2：研究员写信，编码员回信
 
 仓库里的 `examples/two-agents/` 就是这个最小闭环。
 
@@ -299,9 +414,9 @@ for msg in bob.list_inbox():          # 默认 folder="new"
 
 这是 Agent 通信最小、也最有用的形状：**带着身份的异步信件，而不是共享一个文件夹。**
 
-### 实例 2：一个本地软件小队
+### 实例 3：一个本地软件小队
 
-把角色拆开，仍然共用同一个邮局、同一本地址簿：
+把角色拆开，仍然共用同一个邮局、同一本地址簿。角色还可以和厂家叠在一起：`pm` 用 ChatGPT，`coder` 用 DeepSeek，`reviewer` 用 Grok，`docs` 用豆包——信件格式不变。
 
 | 盒子 | 职责 | 典型信件 |
 |------|------|----------|
@@ -315,7 +430,7 @@ for msg in bob.list_inbox():          # 默认 folder="new"
 
 地址簿是公开的，但只有地址、显示名、摘要、capabilities、状态，**没有 token**。新来的 Agent 先看谁在线、谁会 `review`，再写信——和人加入项目组的方式一样。
 
-### 实例 3：Skills 当分拣员，主循环只处理该看的信
+### 实例 4：Skills 当分拣员，主循环只处理该看的信
 
 真实团队里不是每封信都值得叫醒 LLM。可以把分拣交给 skill。
 
@@ -336,7 +451,7 @@ for msg in bob.list_inbox():          # 默认 folder="new"
 
 这是邮局该有的能力：**规则在信封上执行，智能花在正文上。**
 
-### 实例 4：人在回路里——控制台就是第三种收件人
+### 实例 5：人在回路里——控制台就是第三种收件人
 
 不是所有决定都该自动回。审查意见、对外发布、涉及密钥的操作，可以规定：某类信只送到 `human@mypost.local`，或者抄送一只给人用的盒子。
 
@@ -344,17 +459,25 @@ for msg in bob.list_inbox():          # 默认 folder="new"
 
 同一封 `request`，Agent 可以起草 `reply` 到 `outbox` 之前先停住，等人在控制台确认——协议不用改，只是收件人换成了人。
 
-### 实例 5：两个项目，两座邮局
+### 实例 6：两个项目，两座邮局
 
 `xingu` 跑业务后端的智能体，`jarvik` 跑实验模型评测。端口、卷、域名都分开。泄露一只 Operator Token，最坏也只是一座邮局。评测集不会出现在业务 Agent 的 inbox 里。
 
 这比「一个超级 Agent 配复杂 ACL」更接近现实组织：房间分开，门牌分开，信送错了会退回，而不是默默写进隔壁的磁盘。
 
-### 实例 6：把现有 Agent 接进来，而不是重写它
+### 实例 7：把现有 Agent 接进来，而不是重写它
 
-AgentPost 不要求你换成某一种框架。只要进程能发 HTTP，就能成为一只盒子。仓库甚至准备了「给新 Agent 的接入指南模板」：管理员 register 一次，把 Box Token 和域名发给对方，对方按 inbox → read → reply → ack 循环即可。
+AgentPost 不要求你换成某一种框架，也不要求你换成某一家模型。只要进程能发 HTTP，就能成为一只盒子。仓库准备了「给新 Agent 的接入指南模板」：管理员 register 一次，把 Box Token 和域名发给对方，对方按 inbox → read → reply → ack 循环即可。
 
-参考 Worker 已经按这个循环实现：扫 `inbox/new`，系统信和回执直接 ack，业务信处理后再 ack。你可以把它换成 LangGraph 节点、换成自己的 CLI Agent、换成定时脚本。邮局不关心收件人用什么模型。
+参考 Worker 已经按这个循环实现：扫 `inbox/new`，系统信和回执直接 ack，业务信处理后再 ack。你可以把它换成：
+
+- ChatGPT / Grok 的官方 API worker
+- 豆包、DeepSeek 的兼容网关
+- LangGraph / CrewAI / AutoGen 里的一个节点
+- Cursor、Claude Code、本地 CLI Agent
+- 甚至一个只会 curl 的 cron
+
+邮局不关心收件人用什么模型。异构协作的接入成本是「会写信」，不是「加入对方的生态系统」。
 
 ---
 
@@ -369,8 +492,9 @@ AgentPost 不要求你换成某一种框架。只要进程能发 HTTP，就能�
 | 审计 | 无 | 要自建 | 在平台侧 | `logs/audit.jsonl`，不含正文 |
 | 本地部署 | 是 | 可以 | 通常不是 | 默认就是 |
 | Agent 接入 | 自己扫盘 | 自己写消费者 | Bot API | CLI / HTTP / SDK |
+| 跨厂商 / 跨架构 | 靠人复制粘贴 | 每家写一个消费者 | 各玩各的 Bot | 同一信封，盒子后面随便换 |
 
-队列仍然有价值，AgentPost 自己也有 spool（incoming / retry / dead-letter）。差别在于：**对 Agent 暴露的不是「请消费这个 topic」，而是「这是你的邮箱」。** 心智模型和人一致，协作接口才能稳定。
+队列仍然有价值，AgentPost 自己也有 spool（incoming / retry / dead-letter）。差别在于：**对 Agent 暴露的不是「请消费这个 topic」，而是「这是你的邮箱」。** 心智模型和人一致，ChatGPT 才能给 Grok 写信而不必加入对方的会话，协作接口才能稳定。
 
 ---
 
@@ -381,8 +505,9 @@ AgentPost 不要求你换成某一种框架。只要进程能发 HTTP，就能�
 3. 用 CLI 发一封 `request`，在控制台用 Bob 的身份打开 inbox。
 4. 回复、ack，回到 Alice 的 inbox 看 receipt。
 5. （可选）给 Bob 加一个 `route_by_label` skill，再发一封带 `api` 标签的信，看 `data/tasks/api/`。
+6. （可选）把 alice / bob 的 worker 分别接到两家模型 API 上，重复步骤 3–4。信封不变，变的只是盒子后面的模型——这就是 ChatGPT→DeepSeek 的最小形态。
 
-十分钟足够建立直觉：信是文件，投递是邮局的事，ack 是收件人的责任。
+十分钟足够建立直觉：信是文件，投递是邮局的事，ack 是收件人的责任。异构协作不需要对方的 SDK，只需要对方的地址。
 
 文档入口：
 
@@ -395,13 +520,13 @@ AgentPost 不要求你换成某一种框架。只要进程能发 HTTP，就能�
 
 ## 八、写在后面
 
-多智能体热起来之后，大家花了很多时间讨论模型、记忆、工具、规划。通信被当成管道，越细越好、越快越好。
+多智能体热起来之后，大家花了很多时间讨论模型、记忆、工具、规划。通信被当成管道，越细越好、越快越好。厂家则把智能体关在各自的窗口里：ChatGPT 到不了 Grok，豆包到不了 DeepSeek，特长互补，会话不通。
 
-管道会泄漏。共享盘会串台。同步调用会把一个慢思考的 Agent 变成整张图的单点。平台聊天记录不属于你。
+管道会泄漏。共享盘会串台。同步调用会把一个慢思考的 Agent 变成整张图的单点。平台聊天记录不属于你。人若继续当跨窗口的粘贴板，再强的模型也只是更贵的单机。
 
-AgentPost 选择把通信做慢一点、显式一点、本地一点：有地址，有信封，有投递，有回执，有私人抽屉。智能体继续当收件人本人；邮局只做邮局该做的事。
+AgentPost 选择把通信做慢一点、显式一点、本地一点：有地址，有信封，有投递，有回执，有私人抽屉。智能体继续当收件人本人；邮局只做邮局该做的事。盒子后面是哪一家，明天可以换；今天就能让它们按特长分工，自己把信写过去。
 
-如果你也在让两个以上的 Agent 一起干活，并且已经厌烦了「谁又改了我的文件」，欢迎来用，欢迎来骂，欢迎来补协议。
+如果你也在让两个以上、尤其是两家以上的 Agent 一起干活，并且已经厌烦了「谁又改了我的文件」和「再复制一段到另一个窗口」，欢迎来用，欢迎来骂，欢迎来补协议。
 
 仓库：https://github.com/AgenticEconomics/agentpost  
 许可：Apache License 2.0
@@ -410,9 +535,10 @@ AgentPost 选择把通信做慢一点、显式一点、本地一点：有地址�
 
 ## 附录 A：CSDN 发布建议
 
-- **标题**：多智能体不会说话：我们为什么开源了一个本地邮局 AgentPost
-- **标签**：人工智能、Agent、开源、后端、Docker
-- **摘要**（可作文章开头加粗）：单智能体已经能写代码，多智能体却还在共享文件夹里互相踩脚。本文从 Agent 通信的五种常见做法讲起，介绍开源项目 AgentPost——本地优先的多智能体邮局：独立邮箱、异步投递、显式回执，以及几个能直接跑的应用实例。
+- **标题**：ChatGPT 给不了 Grok 写信：我们为什么开源了一个本地邮局 AgentPost
+- **备选标题**：多智能体不会说话：用本地邮局打通 ChatGPT、Grok、豆包和 DeepSeek
+- **标签**：人工智能、Agent、开源、后端、Docker、大模型
+- **摘要**（可作文章开头加粗）：单智能体已经能写代码，多智能体却还在共享文件夹和厂商窗口里互相踩脚。ChatGPT 的方案到不了 DeepSeek，豆包的纪要到不了 Grok，人成了唯一的复制粘贴路由器。本文从 Agent 通信讲起，介绍开源项目 AgentPost——本地优先的多智能体邮局：独立邮箱、异步投递、显式回执，以及如何按特长协调异构智能体。
 - **封面**：控制台收件箱截图，或文中的架构 ASCII 图导出。
 - 文中 GitHub 链接保持可点；代码块语言标 `yaml` / `bash` / `python`。
 
@@ -422,30 +548,30 @@ AgentPost 选择把通信做慢一点、显式一点、本地一点：有地址�
 
 **单条版（约 280 字，适合中文站）：**
 
-单智能体已经能写代码。多智能体真正缺的不是更强的模型，是通信层。
+ChatGPT 写完方案，还得复制到 DeepSeek 去实现；豆包整理的纪要，再手工丢给 Grok 挑刺。人成了唯一的跨厂商总线。
 
-共享目录会互相覆盖，共享上下文会串台，同步 RPC 等不住一个还在思考的 Agent，把 Slack 当总线则数据和权限都不在你这。
-
-我们开源了 AgentPost：本地优先的多智能体邮局。每只 Agent 一只 SubBox，不共享磁盘；唯一合法通道是邮箱。信是 YAML + Markdown 文件，投递由 daemon 做，处理完必须显式 ack。Skills 是邮件规则，不调用 LLM。
+我们开源了 AgentPost：本地优先的多智能体邮局。每只 Agent 一只邮箱，不共享磁盘。信封是 YAML + Markdown，跟模型无关——ChatGPT 可以给 Grok 写信，豆包可以给 DeepSeek 派工。特长留下，围墙只留在各自的 API Key 上。
 
 人看控制台，Agent 走 CLI / HTTP / SDK。Apache 2.0。
 https://github.com/AgenticEconomics/agentpost
 
-**线程版（8 条，可一条条贴）：**
+**线程版（9 条，可一条条贴）：**
 
-1/8 多智能体项目里，我见过最常见的事故不是模型笨，而是两个 Agent 共用一个目录。谁先写谁算，出了问题无法回答「这是谁发给谁的」。
+1/9 多智能体项目里，我见过最常见的事故不是模型笨，而是两个 Agent 共用一个目录。谁先写谁算，出了问题无法回答「这是谁发给谁的」。
 
-2/8 共享内存、同步 RPC、Slack 当总线，各自能跑通 demo。它们缺的是同一组性质：身份、隔离、异步投递、回执、人可以打开原文审计。
+2/9 另一个事故更日常：ChatGPT 到不了 Grok，豆包到不了 DeepSeek。特长是互补的，会话是隔离的。人在当跨窗口的粘贴板。
 
-3/8 人已经有过答案：邮局。地址、信封、投递、退信、已读。AgentPost 把这套搬到本地：每只智能体一只 SubBox，不扫别人的盘，不写别人的文件。
+3/9 共享内存、同步 RPC、Slack 当总线、在一个脚本里串多家 API，都能跑通 demo。缺的是同一组性质：身份、隔离、异步投递、回执，以及「对方只看见这封信，看不见我的密钥」。
 
-4/8 一封信就是一个 `.msg.md`：YAML 头 + Markdown 正文。type 只有 request / reply / event / receipt / artifact / system。线程、附件、优先级都在头上。人用编辑器能读，Agent 用同一套 API 能读。
+4/9 人已经有过答案：邮局。AgentPost 把这套搬到本地。一只盒子 = 一个身份 + 一只私人邮箱。盒子后面是 ChatGPT、Grok、豆包还是 DeepSeek，邮局不管。
 
-5/8 发信返回 accepted，不是 delivered。daemon 扫 outbox，抄到对方 inbox/new。收件人必须 ack，信才进 seen。Skills 可索引、可存附件，但不准替你把未处理的任务标成已读。
+5/9 一封信就是一个 `.msg.md`：YAML 头 + Markdown 正文。任何能读中文的模型都能处理，不必对接对方的会话 API。换模型不换地址。
 
-6/8 安全是默认值：Box Token 只能进自己的盒子；from 必须是自己；路径拒绝 .. ；skill 默认无网、5 秒超时。Operator 管邮局，盒子管自己的信。
+6/9 发信返回 accepted，不是 delivered。daemon 扫 outbox，抄到对方 inbox/new。收件人必须 ack。Skills 是邮件规则，不调用 LLM，也不准替你把未处理的任务标成已读。
 
-7/8 能直接跑的用法：研究员写信给编码员；PM / coder / reviewer 小队；skill 按标签分拣；人在控制台当第三收件人；一台机器上 xingu、jarvik 两座互不可见的邮局。
+7/9 安全是默认值：Box Token 只能进自己的盒子；from 必须是自己；路径拒绝 .. 。DeepSeek 看不见 ChatGPT 的系统提示，豆包读不到 Grok 的 Key。
 
-8/8 不绑定任何 Agent 框架。能发 HTTP 就能成为一只盒子。本地 Docker 拉起来就能写第一封信。Apache 2.0。
+8/9 用法：ChatGPT 派工 → DeepSeek 写代码 → Grok 挑刺 → 豆包落中文文档。人在控制台看同一条线程，不再做复制粘贴。
+
+9/9 不绑定任何厂家或框架。能发 HTTP 就能成为一只盒子。本地 Docker 拉起来就能写第一封信。Apache 2.0。
 https://github.com/AgenticEconomics/agentpost

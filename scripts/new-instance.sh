@@ -38,7 +38,7 @@ AGENTPOST_OPERATOR_TOKEN=$(openssl rand -hex 32)
 API_PORT=$API_PORT
 WEB_PORT=$WEB_PORT
 IMAGE_REGISTRY=ghcr.io/agenticeconomics
-IMAGE_TAG=0.1.0
+IMAGE_TAG=latest
 EOF
 
 # Copy pull-only compose file

@@ -194,7 +194,7 @@ name: ${INSTANCE_NAME:-agentpost}
 
 services:
   api:
-    image: ${IMAGE_REGISTRY:-ghcr.io/agenticeconomics}/agentpost-api:${IMAGE_TAG:-0.1.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/agenticeconomics}/agentpost-api:${IMAGE_TAG:-latest}
     container_name: ${INSTANCE_NAME:-agentpost}-api
     restart: unless-stopped
     environment:
@@ -218,7 +218,7 @@ services:
       - instance-net
 
   web:
-    image: ${IMAGE_REGISTRY:-ghcr.io/agenticeconomics}/agentpost-web:${IMAGE_TAG:-0.1.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/agenticeconomics}/agentpost-web:${IMAGE_TAG:-latest}
     container_name: ${INSTANCE_NAME:-agentpost}-web
     restart: unless-stopped
     depends_on:
@@ -264,7 +264,7 @@ AGENTPOST_OPERATOR_TOKEN=$(openssl rand -hex 32)
 API_PORT=8765
 WEB_PORT=58080
 IMAGE_REGISTRY=ghcr.io/agenticeconomics
-IMAGE_TAG=0.1.0
+IMAGE_TAG=latest
 ENV
 ```
 
@@ -273,6 +273,31 @@ ENV
 ```bash
 docker compose up -d
 ```
+
+如果预构建镜像拉取失败（网络不通、未授权、超时等），回退到**本地构建**：
+
+```bash
+# 1. 克隆源码
+git clone https://github.com/AgenticEconomics/agentpost.git /tmp/agentpost-src
+
+# 2. 复制构建上下文到当前目录
+cp -r /tmp/agentpost-src/backend ./backend
+cp -r /tmp/agentpost-src/web ./web
+cp -r /tmp/agentpost-src/deploy ./deploy
+cp /tmp/agentpost-src/Dockerfile ./Dockerfile
+
+# 3. 切换到本地构建 compose 文件
+cp /tmp/agentpost-src/docker-compose.yml ./docker-compose.yml
+rm -f docker-compose.pull.yml  # 移除 pull-only 版本
+
+# 4. 本地构建并启动
+docker compose up -d --build
+```
+
+> **中国大陆基础镜像加速**：如果 `python:3.11-slim` 等基础镜像拉取慢，在 `/etc/docker/daemon.json` 中配置 DaoCloud 镜像站：
+> ```json
+> {"registry-mirrors": ["https://docker.m.daocloud.io"]}
+> ```
 
 ## 1.5 验证
 

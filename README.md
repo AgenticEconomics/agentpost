@@ -38,7 +38,7 @@ AGENTPOST_OPERATOR_TOKEN=替换为一长串随机字符串
 API_PORT=8765
 WEB_PORT=58080
 IMAGE_REGISTRY=ghcr.io/agenticeconomics
-IMAGE_TAG=0.1.0
+IMAGE_TAG=latest
 ENV
 
 # 4. 启动
@@ -58,7 +58,7 @@ docker compose up -d
 > **中国大陆加速**：如 ghcr.io 拉取缓慢，切换到阿里云 ACR 镜像源——在 `.env` 中设置：
 > ```
 > IMAGE_REGISTRY=crpi-9dwgg7k88349acd7.cn-hangzhou.personal.cr.aliyuncs.com/agenticeconomics
-> IMAGE_TAG=0.1.0
+> IMAGE_TAG=latest
 > ```
 > 镜像名和版本与 ghcr.io 完全一致，仅仓库地址不同。
 
