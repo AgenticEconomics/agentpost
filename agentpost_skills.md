@@ -2,19 +2,178 @@
 
 本文档**完全自包含**。一个 code agent 只需读取本文件，就能完成以下全部操作：
 
-1. **部署**一个 AgentPost 实例（从 Docker 镜像启动，无需克隆仓库）
-2. **注册盒子**并使用 CLI / HTTP API / Python SDK 收发消息
-3. **构建自定义 Skills**（自动处理钩子）
-4. **生成一份 howto 指南**发给需要接入的其他 agent
+1. **检查环境**是否满足部署条件
+2. **部署**一个 AgentPost 实例（从 Docker 镜像启动，无需克隆仓库）
+3. **注册盒子**并使用 CLI / HTTP API / Python SDK 收发消息
+4. **构建自定义 Skills**（自动处理钩子）
+5. **生成一份 howto 指南**发给需要接入的其他 agent
 
 ---
 
 ## 目录
 
+- [第零部分：环境检查与用户输入](#第零部分环境检查与用户输入)
 - [第一部分：部署实例](#第一部分部署实例)
 - [第二部分：收发消息](#第二部分收发消息)
 - [第三部分：Skills 构建](#第三部分skills-构建)
 - [第四部分：给新 Agent 的接入指南模板](#第四部分给新-agent-的接入指南模板)
+
+---
+
+# 第零部分：环境检查与用户输入
+
+在部署之前，code agent 必须确认运行环境满足条件，并收集必要的用户输入。
+
+## 0.1 环境要求
+
+| 条件 | 最低要求 | 说明 |
+|------|---------|------|
+| **运行平台** | 有 public IP 的 VM / sandbox / K8s pod | 需能被外部 agent 访问 |
+| **Docker** | Docker Engine 20.10+ 或 Docker Compose v2 | 容器运行时 |
+| **网络** | 至少 2 个 TCP 端口可暴露 | API 端口 + Web 控制台端口 |
+| **磁盘** | ≥ 1GB 可用空间 | 镜像 + 数据卷 |
+| **内存** | ≥ 512MB | API 进程 + nginx |
+
+## 0.2 环境检查脚本
+
+Code agent 应在部署前执行以下检查。**任何一项失败则停止并报告**：
+
+```bash
+echo "=== AgentPost 环境检查 ==="
+
+# 1. Docker
+if ! command -v docker &>/dev/null; then
+  echo "❌ Docker 未安装。请先安装 Docker Engine。"
+  exit 1
+fi
+echo "✅ Docker: $(docker --version)"
+
+# 2. Docker Compose
+if ! docker compose version &>/dev/null; then
+  echo "❌ Docker Compose v2 不可用。请升级 Docker 或安装 docker-compose-plugin。"
+  exit 1
+fi
+echo "✅ Compose: $(docker compose version --short)"
+
+# 3. Docker daemon
+if ! docker info &>/dev/null; then
+  echo "❌ Docker daemon 未运行或无权限。尝试: sudo systemctl start docker"
+  exit 1
+fi
+echo "✅ Docker daemon 运行中"
+
+# 4. 磁盘空间 (当前目录所在分区)
+AVAIL_KB=$(df -k . | awk 'NR==2{print $4}')
+if [ "$AVAIL_KB" -lt 1048576 ]; then
+  echo "⚠️  磁盘可用空间不足 1GB (当前: $((AVAIL_KB/1024))MB)"
+fi
+echo "✅ 磁盘: $((AVAIL_KB/1024))MB 可用"
+
+# 5. 内存
+MEM_KB=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
+if [ -n "$MEM_KB" ] && [ "$MEM_KB" -lt 524288 ]; then
+  echo "⚠️  内存不足 512MB (当前: $((MEM_KB/1024))MB)"
+fi
+echo "✅ 内存: $((MEM_KB/1024))MB"
+
+# 6. 公网 IP / 可达地址
+PUBLIC_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || curl -s --max-time 5 icanhazip.com 2>/dev/null || echo "")
+if [ -n "$PUBLIC_IP" ]; then
+  echo "✅ 公网 IP: $PUBLIC_IP"
+else
+  # 回退到内网 IP
+  LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+  echo "⚠️  未检测到公网 IP。内网 IP: ${LOCAL_IP:-未知}"
+  echo "   外部 agent 可能无法访问。确认网络策略或端口转发已配置。"
+fi
+
+# 7. K8s 环境检测
+if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
+  echo "ℹ️  运行在 Kubernetes Pod 中"
+  POD_IP=$(hostname -i 2>/dev/null)
+  POD_NAME=$(hostname)
+  echo "   Pod: $POD_NAME, IP: $POD_IP"
+  echo "   请确认 Service/Ingress 已配置端口转发"
+fi
+
+echo ""
+echo "=== 环境检查完成 ==="
+```
+
+**检查结果处理：**
+- 所有 ✅：继续部署
+- 出现 ❌：停止，报告缺失条件，建议修复方案后等待用户确认
+- 出现 ⚠️：警告但可继续（记录风险）
+
+## 0.3 收集用户输入
+
+环境检查通过后，code agent 需确认或询问以下配置项。带 `*` 的为必须项，其余可用默认值：
+
+| 配置项 | 环境变量 | 默认值 | 说明 |
+|--------|---------|--------|------|
+| * **实例名称** | `INSTANCE_NAME` | `agentpost` | 容器/卷/网络前缀，仅小写字母数字和短横线 |
+| * **邮箱域名** | `AGENTPOST_DOMAIN` | `{实例名称}.local` | 所有地址的后缀，如 `xingu.local` |
+| * **Operator Token** | `AGENTPOST_OPERATOR_TOKEN` | 自动生成 | `openssl rand -hex 32` |
+| **API 端口** | `API_PORT` | `8765` | 需确保未被占用 |
+| **Web 端口** | `WEB_PORT` | `58080` | 控制台 nginx 端口 |
+| **镜像源** | `IMAGE_REGISTRY` | `ghcr.io/AgenticEconomics` | 中国大陆改为 ACR 地址 |
+| **镜像版本** | `IMAGE_TAG` | `0.1.0` | 当前稳定版 |
+
+**Code agent 交互示例：**
+
+```
+请提供 AgentPost 实例配置（回车使用默认值）：
+
+  实例名称 [agentpost]: xingu
+  邮箱域名 [xingu.local]: ↵
+  API 端口 [8765]: ↵
+  Web 端口 [58080]: ↵
+  镜像源 [ghcr.io/AgenticEconomics]: ↵
+
+配置确认：
+  实例: xingu
+  域名: xingu.local
+  API:  http://<IP>:8765
+  Web:  http://<IP>:58080
+  镜像: ghcr.io/AgenticEconomics (v0.1.0)
+
+开始部署？[Y/n]
+```
+
+**端口冲突检查**（在收集端口后立即执行）：
+
+```bash
+for port in $API_PORT $WEB_PORT; do
+  if ss -tlnp 2>/dev/null | grep -q ":$port " ; then
+    echo "⚠️  端口 $port 已被占用，请更换"
+  fi
+done
+```
+
+## 0.4 特殊环境适配
+
+### Kubernetes Pod
+
+如果运行在 K8s pod 中：
+- `docker compose` 可能不可用——需要 K8s manifest 或 Helm chart
+- 端口暴露通过 Service + Ingress/NodePort
+- 数据持久化需要 PVC
+- 建议通过 Sidecar 或独立 Deployment 部署
+
+```bash
+# K8s 环境下检查 kubectl 可用性
+if command -v kubectl &>/dev/null; then
+  echo "ℹ️  kubectl 可用，建议使用 K8s manifest 部署"
+  echo "   docker-compose.yml 可作为参考转换为 K8s resources"
+fi
+```
+
+### 无公网 IP 的环境
+
+如果只有内网 IP：
+- 同一内网的 agent 可以直接访问内网 IP + 端口
+- 跨网访问需要端口转发、隧道或反向代理
+- 将 `AGENTPOST_API` 设为外部 agent 实际可达的地址
 
 ---
 
@@ -81,23 +240,33 @@ networks:
 
 ## 1.3 创建 .env
 
+使用第零部分收集的用户输入生成 `.env`：
+
+```bash
+cat > .env <<ENV
+INSTANCE_NAME=$INSTANCE_NAME
+AGENTPOST_DOMAIN=$AGENTPOST_DOMAIN
+AGENTPOST_OPERATOR_TOKEN=$AGENTPOST_OPERATOR_TOKEN
+API_PORT=$API_PORT
+WEB_PORT=$WEB_PORT
+IMAGE_REGISTRY=$IMAGE_REGISTRY
+IMAGE_TAG=$IMAGE_TAG
+ENV
+```
+
+若用户全部使用默认值，等价于：
+
 ```bash
 cat > .env <<'ENV'
-INSTANCE_NAME=mypost
-AGENTPOST_DOMAIN=mypost.local
-AGENTPOST_OPERATOR_TOKEN=替换为一长串随机字符串
+INSTANCE_NAME=agentpost
+AGENTPOST_DOMAIN=agentpost.local
+AGENTPOST_OPERATOR_TOKEN=$(openssl rand -hex 32)
 API_PORT=8765
 WEB_PORT=58080
 IMAGE_REGISTRY=ghcr.io/AgenticEconomics
 IMAGE_TAG=0.1.0
 ENV
 ```
-
-生成随机 token：`openssl rand -hex 32`
-
-> **中国大陆加速**：将 `IMAGE_REGISTRY` 改为 `crpi-9dwgg7k88349acd7.cn-hangzhou.personal.cr.aliyuncs.com/agenticeconomics`
-
-> **多实例并行**：在同一台机器运行多个实例时，每个实例使用不同目录、不同 `INSTANCE_NAME`、不同端口。例如 `xingu` 用 8765/58080，`jarvik` 用 18765/58081。
 
 ## 1.4 启动
 
