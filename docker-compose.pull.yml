@@ -11,7 +11,7 @@ name: ${INSTANCE_NAME:-agentpost}
 
 services:
   api:
-    image: ${IMAGE_REGISTRY:-ghcr.io/AgenticEconomics}/agentpost-api:${IMAGE_TAG:-0.1.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-api:${IMAGE_TAG:-0.1.0}
     container_name: ${INSTANCE_NAME:-agentpost}-api
     restart: unless-stopped
     environment:
@@ -35,7 +35,7 @@ services:
       - instance-net
 
   web:
-    image: ${IMAGE_REGISTRY:-ghcr.io/AgenticEconomics}/agentpost-web:${IMAGE_TAG:-0.1.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-web:${IMAGE_TAG:-0.1.0}
     container_name: ${INSTANCE_NAME:-agentpost}-web
     restart: unless-stopped
     depends_on:

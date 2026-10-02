@@ -63,7 +63,7 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 
 ### 阶段三：多实例化改造（commit `fb254c9`）
 
-使 AgentPost 支持同一台机器上并行运行多个独立实例，镜像发布到 `ghcr.io/AgenticEconomics`。
+使 AgentPost 支持同一台机器上并行运行多个独立实例，镜像发布到 `ghcr.io/agentic economics`。
 
 #### 改动清单
 
@@ -107,7 +107,7 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 
 | 文件 | 用途 |
 |------|------|
-| `.github/workflows/build-push.yml` | CI/CD：构建三镜像推送 `ghcr.io/AgenticEconomics` |
+| `.github/workflows/build-push.yml` | CI/CD：构建三镜像推送 `ghcr.io/agentic economics` |
 | `docker-compose.pull.yml` | 生产部署用 pull-only compose |
 | `scripts/new-instance.sh` | 一键创建新实例 |
 | `.env.example` | 完整配置模板 |
@@ -117,9 +117,9 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 
 | 镜像 | 用途 |
 |------|------|
-| `ghcr.io/AgenticEconomics/agentpost-api:0.1.0` | FastAPI 服务端 + 投递引擎 + CLI |
-| `ghcr.io/AgenticEconomics/agentpost-web:0.1.0` | React 控制台（nginx） |
-| `ghcr.io/AgenticEconomics/agentpost-worker:0.1.0` | 参考 Worker 进程 |
+| `ghcr.io/agentic economics/agentpost-api:0.1.0` | FastAPI 服务端 + 投递引擎 + CLI |
+| `ghcr.io/agentic economics/agentpost-web:0.1.0` | React 控制台（nginx） |
+| `ghcr.io/agentic economics/agentpost-worker:0.1.0` | 参考 Worker 进程 |
 
 ---
 
@@ -175,7 +175,7 @@ AgentPost 从 AgentBox 项目 fork 而来，目标是构建一个本地优先的
 | 前端 | React 18, TypeScript, Vite, Tailwind CSS |
 | CLI | Python + Typer + Rich（25 个命令） |
 | 部署 | Docker Compose, nginx, multi-stage Dockerfile |
-| CI/CD | GitHub Actions → `ghcr.io/AgenticEconomics` |
+| CI/CD | GitHub Actions → `ghcr.io/agentic economics` |
 
 ---
 

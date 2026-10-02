@@ -37,7 +37,7 @@ AGENTPOST_DOMAIN=${NAME}.local
 AGENTPOST_OPERATOR_TOKEN=$(openssl rand -hex 32)
 API_PORT=$API_PORT
 WEB_PORT=$WEB_PORT
-IMAGE_REGISTRY=ghcr.io/AgenticEconomics
+IMAGE_REGISTRY=ghcr.io/agentic economics
 IMAGE_TAG=0.1.0
 EOF
 
