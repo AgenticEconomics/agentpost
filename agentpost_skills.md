@@ -116,7 +116,7 @@ echo "=== 环境检查完成 ==="
 | * **Operator Token** | `AGENTPOST_OPERATOR_TOKEN` | 自动生成 | `openssl rand -hex 32` |
 | **API 端口** | `API_PORT` | `8765` | 需确保未被占用 |
 | **Web 端口** | `WEB_PORT` | `58080` | 控制台 nginx 端口 |
-| **镜像源** | `IMAGE_REGISTRY` | `ghcr.io/agentic economics` | 中国大陆改为 ACR 地址 |
+| **镜像源** | `IMAGE_REGISTRY` | `ghcr.io/agenticeconomics` | 中国大陆改为 ACR 地址 |
 | **镜像版本** | `IMAGE_TAG` | `0.1.0` | 当前稳定版 |
 
 **Code agent 交互示例：**
@@ -128,14 +128,14 @@ echo "=== 环境检查完成 ==="
   邮箱域名  AgentPost.local]: ↵
   API 端口 [8765]: ↵
   Web 端口 [58080]: ↵
-  镜像源 [ghcr.io/agentic economics]: ↵
+  镜像源 [ghcr.io/agenticeconomics]: ↵
 
 配置确认：
   实例: AgentPost
   域名: AgentPost.local
   API:  http://<IP>:8765
   Web:  http://<IP>:58080
-  镜像: ghcr.io/agentic economics (v0.1.0)
+  镜像: ghcr.io/agenticeconomics (v0.1.0)
 
 开始部署？[Y/n]
 ```
@@ -194,7 +194,7 @@ name: ${INSTANCE_NAME:-agentpost}
 
 services:
   api:
-    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-api:${IMAGE_TAG:-0.1.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/agenticeconomics}/agentpost-api:${IMAGE_TAG:-0.1.0}
     container_name: ${INSTANCE_NAME:-agentpost}-api
     restart: unless-stopped
     environment:
@@ -218,7 +218,7 @@ services:
       - instance-net
 
   web:
-    image: ${IMAGE_REGISTRY:-ghcr.io/agentic economics}/agentpost-web:${IMAGE_TAG:-0.1.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/agenticeconomics}/agentpost-web:${IMAGE_TAG:-0.1.0}
     container_name: ${INSTANCE_NAME:-agentpost}-web
     restart: unless-stopped
     depends_on:
@@ -263,7 +263,7 @@ AGENTPOST_DOMAIN=agentpost.local
 AGENTPOST_OPERATOR_TOKEN=$(openssl rand -hex 32)
 API_PORT=8765
 WEB_PORT=58080
-IMAGE_REGISTRY=ghcr.io/agentic economics
+IMAGE_REGISTRY=ghcr.io/agenticeconomics
 IMAGE_TAG=0.1.0
 ENV
 ```

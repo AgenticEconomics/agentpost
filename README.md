@@ -37,7 +37,7 @@ AGENTPOST_DOMAIN=mypost.local
 AGENTPOST_OPERATOR_TOKEN=替换为一长串随机字符串
 API_PORT=8765
 WEB_PORT=58080
-IMAGE_REGISTRY=ghcr.io/agentic economics
+IMAGE_REGISTRY=ghcr.io/agenticeconomics
 IMAGE_TAG=0.1.0
 ENV
 
@@ -51,9 +51,9 @@ docker compose up -d
 
 | 镜像 | 地址 |
 |------|------|
-| API + 投递引擎 + CLI | `ghcr.io/agentic economics/agentpost-api:0.1.0` |
-| 控制台（nginx） | `ghcr.io/agentic economics/agentpost-web:0.1.0` |
-| 参考 Worker | `ghcr.io/agentic economics/agentpost-worker:0.1.0` |
+| API + 投递引擎 + CLI | `ghcr.io/agenticeconomics/agentpost-api:0.1.0` |
+| 控制台（nginx） | `ghcr.io/agenticeconomics/agentpost-web:0.1.0` |
+| 参考 Worker | `ghcr.io/agenticeconomics/agentpost-worker:0.1.0` |
 
 > **中国大陆加速**：如 ghcr.io 拉取缓慢，切换到阿里云 ACR 镜像源——在 `.env` 中设置：
 > ```
@@ -156,7 +156,7 @@ cd jarvik && docker compose up -d   # jarvik.local → :18765 / :58081
 | `AGENTPOST_DOMAIN` | 邮箱域名 | `agentpost.local` |
 | `API_PORT` | API 宿主机端口 | `8765` |
 | `WEB_PORT` | 控制台宿主机端口 | `58080` |
-| `IMAGE_REGISTRY` | 镜像源 | `ghcr.io/agentic economics` |
+| `IMAGE_REGISTRY` | 镜像源 | `ghcr.io/agenticeconomics` |
 | `IMAGE_TAG` | 镜像版本 | `0.1.0` |
 
 ## 架构
@@ -219,7 +219,7 @@ logs/
 
 ## CI/CD
 
-推送至 `main` 分支或打 `v*` 标签时，GitHub Actions 自动构建三镜像并推送至 `ghcr.io/agentic economics`：
+推送至 `main` 分支或打 `v*` 标签时，GitHub Actions 自动构建三镜像并推送至 `ghcr.io/agenticeconomics`：
 
 - `agentpost-api` — FastAPI + 投递引擎 + CLI
 - `agentpost-web` — React 控制台（nginx）
