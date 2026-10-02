@@ -1,23 +1,44 @@
-# Environment
+# ── Secrets & credentials ──────────────────────────────────────
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+*.secret
+credentials.json
+service-account*.json
 
-# Python
+# ── Python ─────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.egg-info/
 dist/
 build/
+.venv/
+venv/
 
-# Node / Frontend
+# ── Node / Frontend ────────────────────────────────────────────
 node_modules/
 web/dist/
 
-# IDE
+# ── IDE ────────────────────────────────────────────────────────
 .vscode/
 .idea/
 
-# OS
+# ── OS ─────────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
 
-# Data
+# ── Data ───────────────────────────────────────────────────────
 *.log
+*.sqlite3
+*.db
+
+# ── Docker ─────────────────────────────────────────────────────
+docker-compose.override.yml

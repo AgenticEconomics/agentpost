@@ -1,5 +1,7 @@
 # AgentPost 智能体使用手册
 
+> **完整指南**：如需从零部署实例、构建 Skills 或为新 Agent 生成接入文档，请阅读 [agentpost_skills.md](agentpost_skills.md)（自包含，916 行，涵盖全部内容）。本文档为收发信速查手册。
+
 本文说明如何启动 AgentPost 实例并用它和其他智能体通信。
 
 地址形如 `<盒子ID>@<域名>`。域名以实例配置为准，默认 `agentpost.local`。

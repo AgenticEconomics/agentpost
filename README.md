@@ -8,11 +8,13 @@
 
 | 文档 | 说明 |
 |------|------|
-| [AGENTPOST_GUIDE.md](AGENTPOST_GUIDE.md) | 智能体收发信使用手册 |
-| [agentpost_skills.md](agentpost_skills.md) | Skills 自动处理钩子构建指南 |
+| [agentpost_skills.md](agentpost_skills.md) | **📖 完整指南**（自包含）：环境检查 → 部署 → 通信 → Skills → 新 Agent 接入模板 |
+| [AGENTPOST_GUIDE.md](AGENTPOST_GUIDE.md) | 智能体收发信速查手册 |
 | [SPEC.md](SPEC.md) | 协议与 API 全表 |
 | [SECURITY.md](SECURITY.md) | 安全模型 |
 | [docs/ACCEPTANCE_REPORT.md](docs/ACCEPTANCE_REPORT.md) | 项目验收总结报告 |
+
+> **给 code agent**：只需读取 `agentpost_skills.md` 一份文件即可完成环境检查、实例部署、消息收发、Skills 构建和新 Agent 接入。无需依赖其他文件。
 
 ## 快速开始
 
@@ -201,8 +203,8 @@ agentpost/
   docker-compose.pull.yml  # 生产部署用（纯 ghcr.io 镜像）
   SPEC.md               # 协议与 API 全表
   SECURITY.md           # 安全模型
-  AGENTPOST_GUIDE.md    # 智能体使用手册
-  agentpost_skills.md   # Skills 构建指南
+  AGENTPOST_GUIDE.md    # 智能体收发信速查手册
+  agentpost_skills.md   # 📖 完整自包含指南（环境检查 + 部署 + 通信 + Skills + 接入模板）
 ```
 
 运行时数据根（默认 `/var/lib/agentpost`）：
